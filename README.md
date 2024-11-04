@@ -2,6 +2,12 @@
 
 This project is a **handwritten digit recognizer** built using a **28x28 grid drawing interface**. It uses a **Convolutional Neural Network (CNN)** to predict which digit (0-9) is drawn by the user and also displays the **likelihood of each digit**. When the model's confidence is less than 50%, the result is displayed as **"Unknown"**.
 
+
+
+https://github.com/user-attachments/assets/3b65d6b8-3793-4aad-b1da-e445b63f0d16
+
+
+
 ## Features
 - **Interactive Drawing Grid**: Users can draw digits (0-9) on a 28x28 grid by holding down the mouse button.
 - **Real-Time Prediction**: After drawing, users can click the **Predict** button to see the predicted digit.
