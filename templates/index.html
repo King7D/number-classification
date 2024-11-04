@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>28x28 Digit Recognizer</title>
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(28, 15px);
+            grid-template-rows: repeat(28, 15px);
+        }
+        .cell {
+            width: 15px;
+            height: 15px;
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+        .cell.active {
+            background-color: black;
+        }
+        .probability-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .bar {
+            height: 20px;
+            background-color: lightblue;
+            transition: width 0.3s;
+            margin-left: 5px;
+        }
+        .label {
+            width: 20px;
+            text-align: center;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="grid" id="grid"></div>
+    <button onclick="clearGrid()">Clear</button>
+    <button onclick="predictDigit()">Predict</button>
+    <p>Prediction: <span id="prediction">None</span></p>
+    <div id="probabilities"></div>
+
+    <script>
+        const grid = document.getElementById('grid');
+        const cells = [];
+        let drawing = false;
+
+        // Create the 28x28 grid
+        for (let i = 0; i < 784; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('cell');
+            cell.addEventListener('mousedown', () => {
+                drawing = true;
+                cell.classList.add('active');
+            });
+            cell.addEventListener('mousemove', () => {
+                if (drawing) {
+                    cell.classList.add('active');
+                }
+            });
+            grid.appendChild(cell);
+            cells.push(cell);
+        }
+
+        // Stop drawing when mouse button is released
+        document.addEventListener('mouseup', () => {
+            drawing = false;
+        });
+
+        // Predict button event listener
+        function predictDigit() {
+            const pixels = cells.map(cell => cell.classList.contains('active') ? 255 : 0);
+            console.log("Pixels array:", pixels);  // Debugging output
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ pixels }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                const maxProbability = Math.max(...data.probabilities);
+                if (maxProbability > 0.5) {
+                    document.getElementById('prediction').innerText = data.prediction;
+                } else {
+                    document.getElementById('prediction').innerText = 'Unknown';
+                }
+                displayProbabilities(data.probabilities);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        // Function to display the probabilities for each digit
+        function displayProbabilities(probabilities) {
+            const probabilitiesContainer = document.getElementById('probabilities');
+            probabilitiesContainer.innerHTML = '';  // Clear previous content
+
+            probabilities.forEach((prob, index) => {
+                const probabilityBar = document.createElement('div');
+                probabilityBar.classList.add('probability-bar');
+
+                const label = document.createElement('div');
+                label.classList.add('label');
+                label.textContent = `${index}:`;
+
+                const barContainer = document.createElement('div');
+                barContainer.style.flexGrow = 1;
+
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.width = `${prob * 100}%`;
+
+                const percentage = document.createElement('span');
+                percentage.textContent = ` ${Math.round(prob * 100)}%`;
+
+                barContainer.appendChild(bar);
+                probabilityBar.appendChild(label);
+                probabilityBar.appendChild(barContainer);
+                probabilityBar.appendChild(percentage);
+                probabilitiesContainer.appendChild(probabilityBar);
+            });
+        }
+
+        // Clear button event listener
+        function clearGrid() {
+            cells.forEach(cell => cell.classList.remove('active'));
+        }
+    </script>
+</body>
+</html>
